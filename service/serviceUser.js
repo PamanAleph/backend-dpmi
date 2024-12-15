@@ -79,9 +79,27 @@ const deleteUser = async (id) => {
   return result.rows[0];
 };
 
+const getUsersByMajorId = async (majorId) => {
+  try {
+    const query = `
+      SELECT id, email, username, major_id, is_admin
+      FROM users
+      WHERE major_id = $1
+    `;
+    const values = [majorId];
+    const result = await client.query(query, values);
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching users by major_id:", error);
+    throw error;
+  }
+};
+
+
 module.exports = {
   getAllUsers,
   getUserById,
   updateUser,
   deleteUser,
+  getUsersByMajorId
 };

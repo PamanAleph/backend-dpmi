@@ -3,6 +3,7 @@ const {
   getUserById,
   updateUser,
   deleteUser,
+  getUsersByMajorId
 } = require("../service/serviceUser");
 
 const fetchAllUsers = async (req, res) => {
@@ -127,9 +128,35 @@ const removeUser = async (req, res) => {
   }
 };
 
+const getUsersByMajorIdController = async (req, res) => {
+  try {
+    const { major_id } = req.params; 
+    if (!major_id) {
+      return res.status(400).json({
+        status: "error",
+        message: "major_id is required",
+      });
+    }
+
+    const users = await getUsersByMajorId(major_id);
+
+    res.status(200).json({
+      status: "success",
+      data: users,
+    });
+  } catch (error) {
+    console.error("Error in getUsersByMajorIdController:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
   fetchAllUsers,
   fetchUserById,
   modifyUser,
   removeUser,
+  getUsersByMajorIdController
 };
