@@ -222,8 +222,7 @@ const evaluationData = async(req,res) => {
 }
 
 const getEvaluationsByMajor = async (req, res) => {
-  const { major_id } = req.body; // Ambil major_id dari payload body
-
+  const { major_id } = req.query; 
   if (!major_id) {
     return res.status(400).json({
       response: {
@@ -235,10 +234,7 @@ const getEvaluationsByMajor = async (req, res) => {
   }
 
   try {
-    // Panggil service untuk mendapatkan data evaluasi
     const evaluations = await findEvaluationsByMajor(major_id);
-
-    // Periksa jika data evaluasi kosong
     if (evaluations.length === 0) {
       return res.status(404).json({
         response: {
@@ -249,17 +245,16 @@ const getEvaluationsByMajor = async (req, res) => {
       });
     }
 
-    // Format respons
     const transformedEvaluations = evaluations.map((evaluation) => ({
       evaluation_id: evaluation.id,
       setup_name: evaluation.setup_name,
       major_id: evaluation.major_id,
       major_name: evaluation.major_name,
       emails: evaluation.emails
-        ? evaluation.emails.split(",").map((email) => email.trim()) // Ubah string menjadi array
-        : [], // Jika null, set array kosong
-      semester: evaluation.semester, // Tambahkan semester
-      end_date: evaluation.end_date, // Tambahkan end_date
+        ? evaluation.emails.split(",").map((email) => email.trim()) 
+        : [], 
+      semester: evaluation.semester, 
+      end_date: evaluation.end_date,
     }));
 
     res.json({
