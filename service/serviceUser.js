@@ -40,17 +40,19 @@ const getUserById = async (id) => {
 };
 
 // Update User
-const updateUser = async (id, { email, username, major_id, is_admin }) => {
+const updateUser = async (id, { email, username, major_id, is_admin, password }) => {
   const query = `
     UPDATE users 
-    SET email = COALESCE($1, email), 
+    SET 
+        email = COALESCE($1, email), 
         username = COALESCE($2, username), 
-        major_id = COALESCE($3, major_id), 
-        is_admin = COALESCE($4, is_admin)
-    WHERE id = $5
+        major_id = COALESCE($3::integer, major_id), 
+        is_admin = COALESCE($4::boolean, is_admin),
+        password = COALESCE($5, password)
+    WHERE id = $6
     RETURNING id, email, username, major_id, is_admin;
   `;
-  const values = [email, username, major_id, is_admin, id];
+  const values = [email, username, major_id, is_admin, password, id];
   const result = await client.query(query, values);
 
   if (result.rows.length === 0) {
@@ -59,6 +61,7 @@ const updateUser = async (id, { email, username, major_id, is_admin }) => {
 
   return getUserById(id);
 };
+
 
 // Delete User
 const deleteUser = async (id) => {
