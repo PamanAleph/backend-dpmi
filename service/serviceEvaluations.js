@@ -276,9 +276,15 @@ const evaluationsDataWithSetup = async () => {
 const findEvaluationsByMajor = async (majorId) => {
   try {
     const query = `
-      SELECT e.*, 
-             m.name AS major_name, 
-             s.name AS setup_name
+      SELECT 
+        e.id, 
+        e.major_id, 
+        e.setup_id, 
+        e.semester, 
+        e.end_date, 
+        m.name AS major_name, 
+        m.emails AS emails, 
+        s.name AS setup_name
       FROM evaluations e
       LEFT JOIN major m ON e.major_id = m.id
       LEFT JOIN setup s ON e.setup_id = s.id

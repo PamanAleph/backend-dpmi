@@ -17,6 +17,6 @@ router.put("/:id", updateExistingData);
 router.delete("/:id", deleteDataById);
 router.post("/check", checkingExistingEvaluation);
 router.get("/data", evaluationData);
-router.get("/major/:majorId", getEvaluationsByMajor);
+router.get("/major", getEvaluationsByMajor);
 
 module.exports = router;
