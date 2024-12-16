@@ -7,7 +7,9 @@ const {
   deleteDataById,
   checkingExistingEvaluation,
   evaluationData,
-  getEvaluationsByMajor
+  getEvaluationsByMajor,
+  getDownloadEvaluations,
+  downloadEvaluationPDF
 } = require("../controller/controllerEvaluations");
 
 router.get("/", getAllData);
@@ -17,6 +19,8 @@ router.put("/:id", updateExistingData);
 router.delete("/:id", deleteDataById);
 router.post("/check", checkingExistingEvaluation);
 router.get("/data", evaluationData);
-router.get("/major/:majorId", getEvaluationsByMajor);
+router.get("/major", getEvaluationsByMajor);
+router.get("/check/:id", getDownloadEvaluations);
+router.get("/download/:id", downloadEvaluationPDF);
 
 module.exports = router;

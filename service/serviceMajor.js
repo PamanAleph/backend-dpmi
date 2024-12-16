@@ -19,21 +19,23 @@ const findById = async (id) => {
 };
 
 const createData = async (data) => {
-  const { name, slug, head, emails } = data; 
+  const { name, slug, head, emails } = data;
+
   try {
-    const emailsString = emails.join(", ");
+    const emailsString = Array.isArray(emails) ? emails.join(", ") : null;
 
     const result = await client.query(
       "INSERT INTO major (name, slug, head, emails) VALUES ($1, $2, $3, $4) RETURNING *",
-      [name, slug, head, emailsString] 
+      [name, slug, head, emailsString]
     );
 
-    return { response: result.rows[0] };  
+    return { response: result.rows[0] };
   } catch (err) {
-    console.log("Database insert error:", err); 
+    console.error("Database insert error:", err);
     throw err;
   }
 };
+
 
 
 const updateData = async (id, data) => {

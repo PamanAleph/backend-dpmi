@@ -10,12 +10,21 @@ const {
 const getAllData = async (req, res) => {
   try {
     const data = await findAll();
+
+    // Transform emails to array
+    const transformedData = data.map((row) => ({
+      ...row,
+      emails: row.emails
+        ? row.emails.split(",").map((email) => email.trim()) // Split by comma and trim whitespace
+        : [], // Use empty array if emails is null
+    }));
+
     res.json({
       response: {
         status: "success",
         message: "Data fetched successfully",
       },
-      data: data,
+      data: transformedData,
     });
   } catch (err) {
     console.error("Internal server error:", err);
@@ -34,6 +43,7 @@ const getDataById = async (req, res) => {
   const { id } = req.params;
   try {
     const data = await findById(id);
+
     if (!data) {
       return res.status(404).json({
         response: {
@@ -43,12 +53,20 @@ const getDataById = async (req, res) => {
         data: null,
       });
     }
+
+    const transformedData = {
+      ...data,
+      emails: data.emails
+        ? data.emails.split(",").map((email) => email.trim()) 
+        : [], 
+    };
+
     res.json({
       response: {
         status: "success",
         message: "Data fetched successfully",
       },
-      data: data,
+      data: transformedData,
     });
   } catch (err) {
     console.error("Internal server error:", err);
