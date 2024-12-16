@@ -6,8 +6,10 @@ const {
   deleteData,
   checkExistingEvaluation,
   evaluationsDataWithSetup,
-  findEvaluationsByMajor
+  findEvaluationsByMajor,
+  downloadEvaluations
 } = require("../service/serviceEvaluations");
+const PDFDocument = require("pdfkit");
 
 const getAllData = async (req, res) => {
   try {
@@ -277,6 +279,149 @@ const getEvaluationsByMajor = async (req, res) => {
   }
 };
 
+const getDownloadEvaluations = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const data = await downloadEvaluations(id);
+
+    if (!data) {
+      return res.status(404).json({
+        response: {
+          status: "error",
+          message: "Data not found",
+        },
+        data: null,
+      });
+    }
+
+    res.status(200).json({
+      response: {
+        status: "success",
+        message: "Data fetched successfully",
+      },
+      data,
+    });
+  } catch (err) {
+    console.error("Internal server error:", err);
+    res.status(500).json({
+      response: {
+        status: "error",
+        message: "Internal server error",
+        details: err.message,
+      },
+      data: null,
+    });
+  }
+};
+
+const downloadEvaluationPDF = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const data = await downloadEvaluations(id);
+
+    if (!data) {
+      return res.status(404).json({
+        response: {
+          status: "error",
+          message: "Data not found",
+        },
+        data: null,
+      });
+    }
+
+    // Buat PDF
+    const doc = new PDFDocument({ margin: 30, size: "A4" });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="evaluation_${data.id}.pdf"`
+    );
+
+    doc.pipe(res);
+
+    // **Header Report**
+    doc
+      .fontSize(18)
+      .text("Evaluation Report", { align: "center", underline: true })
+      .moveDown(0.5);
+
+    doc.fontSize(12).text(`ID: ${data.id}`);
+    doc.text(`Semester: ${data.semester}`);
+    doc.text(`End Date: ${new Date(data.end_date).toLocaleDateString("id-ID")}`);
+    doc.text(`Major: ${data.major_name} (ID: ${data.major_id})`);
+    doc.text(`Setup Name: ${data.setup_name}`);
+    doc.moveDown(1);
+
+    // Loop setiap section
+    data.sections.forEach((section, index) => {
+      doc
+        .fontSize(14)
+        .fillColor("black")
+        .text(`Section ${section.sequence}: ${section.name}`, {
+          underline: true,
+        })
+        .moveDown(0.5);
+
+      // Header Tabel
+      doc
+        .fontSize(10)
+        .fillColor("black")
+        .text("No.", 50, doc.y, { width: 50, align: "center" })
+        .text("Question", 100, doc.y, { width: 250, align: "left" })
+        .text("Answer", 350, doc.y, { width: 100, align: "center" })
+        .text("Score", 450, doc.y, { width: 50, align: "center" });
+
+      doc
+        .moveTo(30, doc.y + 5)
+        .lineTo(570, doc.y + 5)
+        .strokeColor("#444")
+        .stroke();
+
+      // Isi tabel
+      section.questions.forEach((question, questionIndex) => {
+        doc
+          .fontSize(10)
+          .fillColor("#000")
+          .text(`${questionIndex + 1}`, 50, doc.y + 5, {
+            width: 50,
+            align: "center",
+          })
+          .text(question.question, 100, doc.y, {
+            width: 250,
+            align: "left",
+          })
+          .text(question.answer || "-", 350, doc.y, {
+            width: 100,
+            align: "center",
+          })
+          .text(question.score !== null ? question.score : "-", 450, doc.y, {
+            width: 50,
+            align: "center",
+          });
+
+        doc
+          .moveTo(30, doc.y + 5)
+          .lineTo(570, doc.y + 5)
+          .strokeColor("#E0E0E0")
+          .stroke();
+      });
+
+      doc.moveDown(1);
+    });
+
+    doc.end();
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    res.status(500).json({
+      response: {
+        status: "error",
+        message: "Internal server error",
+        details: error.message,
+      },
+    });
+  }
+};
+
 module.exports = {
   getAllData,
   getDataById,
@@ -285,5 +430,7 @@ module.exports = {
   deleteDataById,
   checkingExistingEvaluation,
   evaluationData,
-  getEvaluationsByMajor
+  getEvaluationsByMajor,
+  getDownloadEvaluations,
+  downloadEvaluationPDF,
 };

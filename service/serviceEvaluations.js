@@ -299,6 +299,100 @@ const findEvaluationsByMajor = async (majorId) => {
   }
 };
 
+const downloadEvaluations = async (id) => {
+  try {
+    const numericId = parseInt(id, 10);
+    if (isNaN(numericId)) {
+      throw new Error("ID must be a valid integer");
+    }
+
+    const evaluationQuery = `
+      SELECT 
+        e.id AS evaluation_id,
+        e.semester,
+        e.end_date,
+        e.major_id,
+        m.name AS major_name,
+        s.name AS setup_name,
+        sec.id AS section_id,
+        sec.name AS section_name,
+        sec.sequence AS section_sequence,
+        q.question,
+        a.answer,
+        a.score
+      FROM 
+        evaluations e
+      LEFT JOIN 
+        major m ON e.major_id = m.id
+      LEFT JOIN 
+        setup s ON e.setup_id = s.id
+      LEFT JOIN 
+        sections sec ON s.id = sec.setup_id
+      LEFT JOIN 
+        questions q ON sec.id = q.section_id
+      LEFT JOIN 
+        answers a ON q.id = a.question_id AND a.evaluation_id = e.id
+      WHERE 
+        e.id = $1
+      ORDER BY 
+        sec.sequence, q.sequence;
+    `;
+
+    const { rows: evaluationData } = await client.query(evaluationQuery, [numericId]);
+
+    if (!evaluationData.length) {
+      return null;
+    }
+
+    // Strukturkan data
+    const evaluation = {
+      id: evaluationData[0].evaluation_id,
+      semester: evaluationData[0].semester,
+      end_date: evaluationData[0].end_date,
+      major_id: evaluationData[0].major_id,
+      major_name: evaluationData[0].major_name,
+      setup_name: evaluationData[0].setup_name,
+      sections: [],
+    };
+
+    const sectionsMap = {};
+
+    evaluationData.forEach((row) => {
+      if (!sectionsMap[row.section_id]) {
+        sectionsMap[row.section_id] = {
+          name: row.section_name || `Section ${row.section_sequence}`,
+          sequence: row.section_sequence,
+          questions: [],
+        };
+      }
+
+      if (row.question) {
+        sectionsMap[row.section_id].questions.push({
+          question: row.question,
+          answer: row.answer,
+          score: row.score,
+        });
+      }
+    });
+
+    evaluation.sections = Object.values(sectionsMap).map((section) => ({
+      name: section.name,
+      sequence: section.sequence,
+      questions: section.questions.map((q) => ({
+        question: q.question,
+        answer: q.answer,
+        score: q.score,
+      })),
+    }));
+
+    return evaluation;
+  } catch (err) {
+    console.error("Error fetching simplified evaluation data:", err);
+    throw new Error(`Could not fetch evaluation data: ${err.message}`);
+  }
+};
+
+
 module.exports = {
   findAll,
   findById,
@@ -308,4 +402,5 @@ module.exports = {
   checkExistingEvaluation,
   evaluationsDataWithSetup,
   findEvaluationsByMajor,
+  downloadEvaluations
 };
